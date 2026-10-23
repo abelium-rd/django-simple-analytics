@@ -1,6 +1,7 @@
 import pytest
 
 from simple_analytics import middleware
+from simple_analytics.models import VisitPerPage
 
 
 @pytest.mark.parametrize(
@@ -28,3 +29,13 @@ def test_process_analytics_existing_analytics_for_page(
     page_analytics, run_analytics, first_row_analytics
 ):
     assert first_row_analytics().view_count == 2
+
+
+@pytest.mark.django_db
+def test_process_analytics_keeps_found_and_not_found_visits_to_one_page_apart(test_request):
+    middleware.process_analytics(test_request, exists=False)
+    middleware.process_analytics(test_request, exists=True)
+    middleware.process_analytics(test_request, exists=True)
+
+    visits = sorted(VisitPerPage.objects.values_list("exists", "view_count"))
+    assert visits == [(False, 1), (True, 2)]

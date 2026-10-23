@@ -3,7 +3,6 @@ import re
 from typing import Any, Callable
 from urllib.parse import urlparse, urlunparse
 
-from django.db import IntegrityError
 from django.db.models import F
 from django.http import HttpRequest, HttpResponse
 
@@ -35,30 +34,17 @@ def process_analytics(request: HttpRequest, **kwargs: Any) -> VisitPerPage:
     referer_url = request.META.get("HTTP_REFERER", "")
     user_agent = request.META.get("HTTP_USER_AGENT", "")
 
-    try:
-        analytics, created = VisitPerPage.objects.update_or_create(
-            date=dt.date.today(),
-            page=request.path,
-            method=request.method or "",
-            username=str(request.user),
-            origin=remove_query_params_from_url(referer_url),
-            user_agent=user_agent,
-            **kwargs,
-        )
+    analytics, created = VisitPerPage.objects.update_or_create(
+        date=dt.date.today(),
+        page=request.path,
+        method=request.method or "",
+        username=str(request.user),
+        origin=remove_query_params_from_url(referer_url),
+        user_agent=user_agent,
+        **kwargs,
+    )
 
-        if not created:
-            analytics.view_count = F("view_count") + 1
-            analytics.save()
-    except IntegrityError:
-        analytics = VisitPerPage.objects.get_or_create(
-            date=dt.date.today(),
-            page=request.path,
-            method=request.method or "",
-            username=str(request.user),
-            origin=remove_query_params_from_url(referer_url),
-            user_agent=user_agent,
-            **kwargs,
-        )
+    if not created:
         analytics.view_count = F("view_count") + 1
         analytics.save()
 

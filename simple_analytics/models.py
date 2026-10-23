@@ -17,7 +17,7 @@ class VisitPerPage(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["date", "page", "method", "username", "origin", "user_agent"],
+                fields=["date", "page", "method", "username", "origin", "user_agent", "exists"],
                 name="unique_visit_per_page",
             )
         ]
